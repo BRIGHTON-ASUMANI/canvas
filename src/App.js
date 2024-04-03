@@ -10,6 +10,7 @@ function App() {
   const [shapes, setShapes] = useState([]);
   const [selectedShapeIndex, setSelectedShapeIndex] = useState(null);
   const [shapeType, setShapeType] = useState('rectangle');
+  const [shapeColor, setShapeColor] = useState('');
   const canvasRef = useRef(null);
 
   useEffect(() => {
@@ -36,6 +37,15 @@ function App() {
         ctx.lineTo(shape.x + (shape.width / 2), shape.y - shape.height);
         ctx.closePath();
         ctx.stroke();
+      } else if (shape.type === 'diamond') {
+        const halfWidth = shape.size / 2;
+        ctx.beginPath();
+        ctx.moveTo(shape.x, shape.y - halfWidth); // Top point
+        ctx.lineTo(shape.x + halfWidth, shape.y); // Right point
+        ctx.lineTo(shape.x, shape.y + halfWidth); // Bottom point
+        ctx.lineTo(shape.x - halfWidth, shape.y); // Left point
+        ctx.closePath();
+        ctx.stroke();
       }
     });
   }, [shapes]);
@@ -47,15 +57,19 @@ function App() {
     let newShape;
     if (shapeType === 'rectangle') {
       newShape = {
-        type: 'rectangle', x: offsetX, y: offsetY, width: 50, height: 50, color: 'blue',
+        type: 'rectangle', x: offsetX, y: offsetY, width: 50, height: 50, color: shapeColor,
       };
     } else if (shapeType === 'circle') {
       newShape = {
-        type: 'circle', x: offsetX, y: offsetY, radius: 25, color: 'red',
+        type: 'circle', x: offsetX, y: offsetY, radius: 25, color: shapeColor,
       };
     } else if (shapeType === 'triangle') {
       newShape = {
-        type: 'triangle', x: offsetX, y: offsetY, width: 50, height: 50, color: 'green',
+        type: 'triangle', x: offsetX, y: offsetY, width: 50, height: 50, color: shapeColor,
+      };
+    } else if (shapeType === 'diamond') {
+      newShape = {
+        type: 'diamond', x: offsetX, y: offsetY, size: 50, color: shapeColor,
       };
     }
 
@@ -76,6 +90,9 @@ function App() {
       const dx = offsetX - lastShape.x;
       const dy = offsetY - lastShape.y;
       lastShape.radius = Math.sqrt(dx * dx + dy * dy);
+    } else if (lastShape.type === 'diamond') {
+      // Adjust size based on mouse movement
+      lastShape.size = Math.abs(offsetX - lastShape.x) * 2;
     }
 
     setShapes(updatedShapes);
@@ -91,6 +108,17 @@ function App() {
       updatedShapes.splice(selectedShapeIndex, 1);
       setShapes(updatedShapes);
       setSelectedShapeIndex(null);
+    }
+  };
+
+  const handleColorChange = (e) => {
+    const newColor = e.target.value;
+    setShapeColor(newColor);
+
+    if (selectedShapeIndex !== null) {
+      const updatedShapes = [...shapes];
+      updatedShapes[selectedShapeIndex].color = newColor;
+      setShapes(updatedShapes);
     }
   };
 
@@ -111,9 +139,22 @@ function App() {
           <Col md={2} style={{ backgroundColor: '#f0f0f0', padding: '10px' }}>
             <h2>Sidebar</h2>
             <ul>
-              <li><button onClick={() => setShapeType('rectangle')}>Rectangle</button></li>
-              <li><button onClick={() => setShapeType('circle')}>Circle</button></li>
-              <li><button onClick={() => setShapeType('triangle')}>Triangle</button></li>
+              <li>
+                <button onClick={() => setShapeType('rectangle')}>Rectangle</button>
+                <input type="color" value={shapeColor} onChange={handleColorChange} />
+              </li>
+              <li>
+                <button onClick={() => setShapeType('circle')}>Circle</button>
+                <input type="color" value={shapeColor} onChange={handleColorChange} />
+              </li>
+              <li>
+                <button onClick={() => setShapeType('triangle')}>Triangle</button>
+                <input type="color" value={shapeColor} onChange={handleColorChange} />
+              </li>
+              <li>
+                <button onClick={() => setShapeType('diamond')}>Diamond</button>
+                <input type="color" value={shapeColor} onChange={handleColorChange} />
+              </li>
             </ul>
             <button onClick={handleDeleteShape}>Delete Shape</button>
           </Col>
