@@ -1,3 +1,4 @@
+/* eslint-disable react/jsx-props-no-spreading */
 /* eslint-disable react/no-array-index-key */
 /* eslint-disable no-unused-vars */
 /* eslint-disable react/button-has-type */
@@ -6,7 +7,7 @@ import {
   Navbar, Nav, Container, Col, Row,
 } from 'react-bootstrap';
 import {
-  Stage, Layer, Text, Arrow,
+  Stage, Layer, Text, Arrow, Circle, Rect, RegularPolygon,
 } from 'react-konva';
 
 function App() {
@@ -15,6 +16,8 @@ function App() {
   const [arrowPoints, setArrowPoints] = useState(null);
   const [arrows, setArrows] = useState([]);
   const [selectedArrowIndex, setSelectedArrowIndex] = useState(null);
+  const [shapes, setShapes] = useState([]);
+  const [selectedShapeIndex, setSelectedShapeIndex] = useState(null); // Add this state variable
 
   useEffect(() => {
     const handleMouseDown = (e) => {
@@ -23,14 +26,20 @@ function App() {
       if (!stageElement) return;
 
       const pos = stageElement.getPointerPosition();
-      const selectedArrow = layer.getIntersection(pos);
-      if (selectedArrow && selectedArrow.className === 'Arrow') {
-        const { index } = selectedArrow;
-        setSelectedArrowIndex(index);
-        const points = selectedArrow.points();
-        setArrowPoints([points[0], points[1], points[2], points[3]]);
+      const selectedShape = layer.getIntersection(pos);
+
+      if (selectedShape) {
+        const { className } = selectedShape;
+        if (className === 'Circle' || className === 'Rect' || className === 'RegularPolygon') {
+          const shapeIndex = selectedShape.index;
+          setSelectedArrowIndex(null);
+          setArrowPoints([pos.x, pos.y, pos.x, pos.y]);
+          setSelectedShapeIndex(shapeIndex);
+        }
       } else {
         setArrowPoints([pos.x, pos.y, pos.x, pos.y]);
+        setSelectedShapeIndex(null);
+        setSelectedArrowIndex(null);
       }
     };
 
@@ -52,11 +61,23 @@ function App() {
         });
         setArrowPoints(null);
         setSelectedArrowIndex(null);
+      } else if (selectedShapeIndex !== null && arrowPoints) {
+        const shape = shapes[selectedShapeIndex];
+        const { x, y } = shape.attrs;
+        const newArrowPoints = [...arrowPoints, x, y];
+        setArrows((prevArrows) => [...prevArrows, newArrowPoints]);
+        setArrowPoints(null);
+        setSelectedShapeIndex(null);
+      } else if (arrowPoints) {
+        // Draw an arrow from any point on the canvas
+        setArrows((prevArrows) => [...prevArrows, arrowPoints]);
+        setArrowPoints(null);
+        setSelectedShapeIndex(null);
       }
     };
 
     document.addEventListener('mousemove', handleMouseMove);
-    const stageElement = stageRef.current; // Renamed to stageElement to avoid conflict
+    const stageElement = stageRef.current;
     if (stageElement) {
       stageElement.addEventListener('mousedown', handleMouseDown);
       stageElement.addEventListener('mouseup', handleMouseUp);
@@ -69,7 +90,48 @@ function App() {
         stageElement.removeEventListener('mouseup', handleMouseUp);
       }
     };
-  }, [arrowPoints, selectedArrowIndex]);
+  }, [arrowPoints, selectedArrowIndex, selectedShapeIndex, shapes]);
+
+  const addCircle = () => {
+    const circle = {
+      type: 'circle',
+      attrs: {
+        x: window.innerWidth / 2,
+        y: window.innerHeight / 2,
+        radius: 50,
+        fill: 'red',
+      },
+    };
+    setShapes([...shapes, circle]);
+  };
+
+  const addRectangle = () => {
+    const rect = {
+      type: 'rect',
+      attrs: {
+        x: window.innerWidth / 2 - 50,
+        y: window.innerHeight / 2 - 25,
+        width: 100,
+        height: 50,
+        fill: 'blue',
+      },
+    };
+    setShapes([...shapes, rect]);
+  };
+
+  const addDiamond = () => {
+    const diamond = {
+      type: 'diamond',
+      attrs: {
+        x: window.innerWidth / 2,
+        y: window.innerHeight / 2,
+        radius: 50,
+        fill: 'green',
+        rotation: 45,
+      },
+    };
+    setShapes([...shapes, diamond]);
+  };
 
   return (
     <div>
@@ -87,7 +149,11 @@ function App() {
       <Container fluid>
         <Row>
           {/* Sidebar */}
-          <Col md={2} style={{ backgroundColor: '#f0f0f0', padding: '10px' }} />
+          <Col md={2} style={{ backgroundColor: '#f0f0f0', padding: '10px' }}>
+            <button onClick={addCircle}>Add Circle</button>
+            <button onClick={addRectangle}>Add Rectangle</button>
+            <button onClick={addDiamond}>Add Diamond</button>
+          </Col>
 
           {/* Main Content */}
           <Col md={10}>
@@ -98,30 +164,51 @@ function App() {
                 ref={stageRef}
               >
                 <Layer ref={layerRef}>
-                  <Text text="Try to draw an arrow" />
+                  {shapes.map((shape, index) => {
+                    switch (shape.type) {
+                      case 'circle':
+                        return (
+                          <Circle
+                            key={index}
+                            {...shape.attrs}
+                            draggable
+                          />
+                        );
+                      case 'rect':
+                        return (
+                          <Rect
+                            key={index}
+                            {...shape.attrs}
+                            draggable
+                          />
+                        );
+                      case 'diamond':
+                        return (
+                          <RegularPolygon
+                            key={index}
+                            {...shape.attrs}
+                            sides={4}
+                            draggable
+                          />
+                        );
+                      default:
+                        return null;
+                    }
+                  })}
                   {arrows.map((points, index) => (
                     <Arrow
                       key={index}
                       points={points}
                       stroke="black"
                       fill="black"
-                      draggable
-                      onDragEnd={(e) => {
-                        const updatedArrows = [...arrows];
-                        updatedArrows[index] = [e.target.x(), e.target.y(),
-                          e.target.x() + (points[2] - points[0]),
-                          e.target.y() + (points[3] - points[1])];
-                        setArrows(updatedArrows);
-                      }}
                     />
                   ))}
-                  {/* Render the currently drawing arrow if arrowPoints is not null */}
                   {arrowPoints && (
-                  <Arrow
-                    points={arrowPoints}
-                    stroke="black"
-                    fill="black"
-                  />
+                    <Arrow
+                      points={arrowPoints}
+                      stroke="black"
+                      fill="black"
+                    />
                   )}
                 </Layer>
               </Stage>
