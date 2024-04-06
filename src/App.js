@@ -1,3 +1,4 @@
+/* eslint-disable react/no-array-index-key */
 /* eslint-disable no-unused-vars */
 /* eslint-disable react/button-has-type */
 import React, { useState, useRef, useEffect } from 'react';
@@ -5,138 +6,70 @@ import {
   Navbar, Nav, Container, Col, Row,
 } from 'react-bootstrap';
 import {
-  FaSquare, FaCircle, FaGem,
-} from 'react-icons/fa';
-
-import { IoIosArrowDropdownCircle } from 'react-icons/io';
+  Stage, Layer, Text, Arrow,
+} from 'react-konva';
 
 function App() {
-  const [isDrawing, setIsDrawing] = useState(false);
-  const [shapes, setShapes] = useState([]);
-  const [selectedShapeIndex, setSelectedShapeIndex] = useState(null);
-  const [shapeType, setShapeType] = useState('rectangle');
-  const [shapeColor, setShapeColor] = useState('');
-  const canvasRef = useRef(null);
+  const stageRef = useRef(null);
+  const layerRef = useRef(null);
+  const [arrowPoints, setArrowPoints] = useState(null);
+  const [arrows, setArrows] = useState([]);
+  const [selectedArrowIndex, setSelectedArrowIndex] = useState(null);
 
   useEffect(() => {
-    const canvas = canvasRef.current;
-    const ctx = canvas.getContext('2d');
+    const handleMouseDown = (e) => {
+      const stageElement = stageRef.current;
+      const layer = layerRef.current;
+      if (!stageElement) return;
 
-    // Clear canvas
-    ctx.clearRect(0, 0, canvas.width, canvas.height);
-
-    // Draw shapes on the canvas
-    shapes.forEach((shape, index) => {
-      ctx.strokeStyle = shape.color;
-      ctx.lineWidth = 2;
-      if (shape.type === 'rectangle') {
-        ctx.strokeRect(shape.x, shape.y, shape.width, shape.height);
-      } else if (shape.type === 'circle') {
-        ctx.beginPath();
-        ctx.arc(shape.x, shape.y, shape.radius, 0, 2 * Math.PI);
-        ctx.stroke();
-      } else if (shape.type === 'triangle') {
-        ctx.beginPath();
-        ctx.moveTo(shape.x, shape.y);
-        ctx.lineTo(shape.x + shape.width, shape.y);
-        ctx.lineTo(shape.x + (shape.width / 2), shape.y - shape.height);
-        ctx.closePath();
-        ctx.stroke();
-      } else if (shape.type === 'diamond') {
-        const halfWidth = shape.size / 2;
-        ctx.beginPath();
-        ctx.moveTo(shape.x, shape.y - halfWidth); // Top point
-        ctx.lineTo(shape.x + halfWidth, shape.y); // Right point
-        ctx.lineTo(shape.x, shape.y + halfWidth); // Bottom point
-        ctx.lineTo(shape.x - halfWidth, shape.y); // Left point
-        ctx.closePath();
-        ctx.stroke();
+      const pos = stageElement.getPointerPosition();
+      const selectedArrow = layer.getIntersection(pos);
+      if (selectedArrow && selectedArrow.className === 'Arrow') {
+        const { index } = selectedArrow;
+        setSelectedArrowIndex(index);
+        const points = selectedArrow.points();
+        setArrowPoints([points[0], points[1], points[2], points[3]]);
+      } else {
+        setArrowPoints([pos.x, pos.y, pos.x, pos.y]);
       }
-    });
-  }, [shapes]);
+    };
 
-  const handleMouseDown = (e) => {
-    setIsDrawing(true);
-    const { offsetX, offsetY } = e.nativeEvent;
+    const handleMouseMove = () => {
+      const stageElement = stageRef.current;
+      if (!stageElement) return;
+      if (arrowPoints) {
+        const pos = stageElement.getPointerPosition();
+        setArrowPoints((prevPoints) => [prevPoints[0], prevPoints[1], pos.x, pos.y]);
+      }
+    };
 
-    let newShape;
-    if (shapeType === 'rectangle') {
-      newShape = {
-        type: 'rectangle',
-        x: offsetX,
-        y: offsetY,
-        width: 50,
-        height: 50,
-        color: shapeColor,
-      };
-    } else if (shapeType === 'circle') {
-      newShape = {
-        type: 'circle',
-        x: offsetX,
-        y: offsetY,
-        radius: 25,
-        color: shapeColor,
-      };
-    } else if (shapeType === 'triangle') {
-      newShape = {
-        type: 'triangle',
-        x: offsetX,
-        y: offsetY,
-        width: 50,
-        height: 50,
-        color: shapeColor,
-      };
-    } else if (shapeType === 'diamond') {
-      newShape = {
-        type: 'diamond',
-        x: offsetX,
-        y: offsetY,
-        size: 50,
-        color: shapeColor,
-      };
+    const handleMouseUp = () => {
+      if (selectedArrowIndex !== null && arrowPoints) {
+        setArrows((prevArrows) => {
+          const updatedArrows = [...prevArrows];
+          updatedArrows[selectedArrowIndex] = arrowPoints;
+          return updatedArrows;
+        });
+        setArrowPoints(null);
+        setSelectedArrowIndex(null);
+      }
+    };
+
+    document.addEventListener('mousemove', handleMouseMove);
+    const stageElement = stageRef.current; // Renamed to stageElement to avoid conflict
+    if (stageElement) {
+      stageElement.addEventListener('mousedown', handleMouseDown);
+      stageElement.addEventListener('mouseup', handleMouseUp);
     }
 
-    setShapes((prevShapes) => [...prevShapes, newShape]);
-  };
-
-  const handleMouseMove = (e) => {
-    if (!isDrawing) return;
-    const { offsetX, offsetY } = e.nativeEvent;
-    const lastShapeIndex = shapes.length - 1;
-    const updatedShapes = [...shapes];
-    const lastShape = updatedShapes[lastShapeIndex];
-
-    if (lastShape.type === 'rectangle' || lastShape.type === 'triangle') {
-      lastShape.width = offsetX - lastShape.x;
-      lastShape.height = offsetY - lastShape.y;
-    } else if (lastShape.type === 'circle') {
-      const dx = offsetX - lastShape.x;
-      const dy = offsetY - lastShape.y;
-      lastShape.radius = Math.sqrt(dx * dx + dy * dy);
-    } else if (lastShape.type === 'diamond') {
-      // Adjust size based on mouse movement
-      lastShape.size = Math.abs(offsetX - lastShape.x) * 2;
-    }
-
-    setShapes(updatedShapes);
-  };
-
-  const handleMouseUp = () => {
-    setIsDrawing(false);
-  };
-
-  const handleDeleteShape = () => {
-    if (selectedShapeIndex !== null) {
-      const updatedShapes = [...shapes];
-      updatedShapes.splice(selectedShapeIndex, 1);
-      setShapes(updatedShapes);
-      setSelectedShapeIndex(null);
-    }
-  };
-
-  const handleColorChange = (e) => {
-    setShapeColor(e.target.value);
-  };
+    return () => {
+      document.removeEventListener('mousemove', handleMouseMove);
+      if (stageElement) {
+        stageElement.removeEventListener('mousedown', handleMouseDown);
+        stageElement.removeEventListener('mouseup', handleMouseUp);
+      }
+    };
+  }, [arrowPoints, selectedArrowIndex]);
 
   return (
     <div>
@@ -154,42 +87,45 @@ function App() {
       <Container fluid>
         <Row>
           {/* Sidebar */}
-          <Col md={2} style={{ backgroundColor: '#f0f0f0', padding: '10px' }}>
-            <input type="color" width="100%" value={shapeColor} onChange={handleColorChange} />
-            <FaSquare
-              style={{ color: shapeColor, cursor: 'pointer' }}
-              onClick={() => setShapeType('rectangle')}
-            />
-            <br />
-            <FaCircle
-              style={{ color: shapeColor, cursor: 'pointer' }}
-              onClick={() => setShapeType('circle')}
-            />
-            <br />
-            <IoIosArrowDropdownCircle
-              style={{ color: shapeColor, cursor: 'pointer' }}
-              onClick={() => setShapeType('triangle')}
-            />
-            <br />
-            <FaGem
-              style={{ color: shapeColor, cursor: 'pointer' }}
-              onClick={() => setShapeType('diamond')}
-            />
-            <button onClick={handleDeleteShape}>Delete Shape</button>
-          </Col>
+          <Col md={2} style={{ backgroundColor: '#f0f0f0', padding: '10px' }} />
 
           {/* Main Content */}
           <Col md={10}>
-            {/* Canvas */}
-            <canvas
-              ref={canvasRef}
-              width={window.innerWidth} // Adjusted width to take full window width
-              height={window.innerHeight} // Adjusted height to take full window height
-              style={{ width: '100%', height: '100%', border: '1px solid black' }} // Updated style
-              onMouseDown={handleMouseDown}
-              onMouseMove={handleMouseMove}
-              onMouseUp={handleMouseUp}
-            />
+            <div id="container">
+              <Stage
+                width={window.innerWidth}
+                height={window.innerHeight}
+                ref={stageRef}
+              >
+                <Layer ref={layerRef}>
+                  <Text text="Try to draw an arrow" />
+                  {arrows.map((points, index) => (
+                    <Arrow
+                      key={index}
+                      points={points}
+                      stroke="black"
+                      fill="black"
+                      draggable
+                      onDragEnd={(e) => {
+                        const updatedArrows = [...arrows];
+                        updatedArrows[index] = [e.target.x(), e.target.y(),
+                          e.target.x() + (points[2] - points[0]),
+                          e.target.y() + (points[3] - points[1])];
+                        setArrows(updatedArrows);
+                      }}
+                    />
+                  ))}
+                  {/* Render the currently drawing arrow if arrowPoints is not null */}
+                  {arrowPoints && (
+                  <Arrow
+                    points={arrowPoints}
+                    stroke="black"
+                    fill="black"
+                  />
+                  )}
+                </Layer>
+              </Stage>
+            </div>
           </Col>
         </Row>
       </Container>
