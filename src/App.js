@@ -4,6 +4,11 @@ import React, { useState, useRef, useEffect } from 'react';
 import {
   Navbar, Nav, Container, Col, Row,
 } from 'react-bootstrap';
+import {
+  FaSquare, FaCircle, FaGem,
+} from 'react-icons/fa';
+
+import { IoIosArrowDropdownCircle } from 'react-icons/io';
 
 function App() {
   const [isDrawing, setIsDrawing] = useState(false);
@@ -57,19 +62,37 @@ function App() {
     let newShape;
     if (shapeType === 'rectangle') {
       newShape = {
-        type: 'rectangle', x: offsetX, y: offsetY, width: 50, height: 50, color: shapeColor,
+        type: 'rectangle',
+        x: offsetX,
+        y: offsetY,
+        width: 50,
+        height: 50,
+        color: shapeColor,
       };
     } else if (shapeType === 'circle') {
       newShape = {
-        type: 'circle', x: offsetX, y: offsetY, radius: 25, color: shapeColor,
+        type: 'circle',
+        x: offsetX,
+        y: offsetY,
+        radius: 25,
+        color: shapeColor,
       };
     } else if (shapeType === 'triangle') {
       newShape = {
-        type: 'triangle', x: offsetX, y: offsetY, width: 50, height: 50, color: shapeColor,
+        type: 'triangle',
+        x: offsetX,
+        y: offsetY,
+        width: 50,
+        height: 50,
+        color: shapeColor,
       };
     } else if (shapeType === 'diamond') {
       newShape = {
-        type: 'diamond', x: offsetX, y: offsetY, size: 50, color: shapeColor,
+        type: 'diamond',
+        x: offsetX,
+        y: offsetY,
+        size: 50,
+        color: shapeColor,
       };
     }
 
@@ -112,24 +135,19 @@ function App() {
   };
 
   const handleColorChange = (e) => {
-    const newColor = e.target.value;
-    setShapeColor(newColor);
-
-    if (selectedShapeIndex !== null) {
-      const updatedShapes = [...shapes];
-      updatedShapes[selectedShapeIndex].color = newColor;
-      setShapes(updatedShapes);
-    }
+    setShapeColor(e.target.value);
   };
 
   return (
     <div>
       <Navbar bg="light" variant="light">
-        <Navbar.Brand>My Navbar</Navbar.Brand>
+        <Navbar.Brand>Diagram Editor</Navbar.Brand>
         <Nav className="mr-auto">
-          <Nav.Link>Link 1</Nav.Link>
-          <Nav.Link>Link 2</Nav.Link>
-          <Nav.Link>Link 3</Nav.Link>
+          <Nav.Link>File</Nav.Link>
+          <Nav.Link>Edit</Nav.Link>
+          <Nav.Link>Select</Nav.Link>
+          <Nav.Link>View</Nav.Link>
+          <Nav.Link>Insert</Nav.Link>
         </Nav>
       </Navbar>
 
@@ -137,25 +155,26 @@ function App() {
         <Row>
           {/* Sidebar */}
           <Col md={2} style={{ backgroundColor: '#f0f0f0', padding: '10px' }}>
-            <h2>Sidebar</h2>
-            <ul>
-              <li>
-                <button onClick={() => setShapeType('rectangle')}>Rectangle</button>
-                <input type="color" value={shapeColor} onChange={handleColorChange} />
-              </li>
-              <li>
-                <button onClick={() => setShapeType('circle')}>Circle</button>
-                <input type="color" value={shapeColor} onChange={handleColorChange} />
-              </li>
-              <li>
-                <button onClick={() => setShapeType('triangle')}>Triangle</button>
-                <input type="color" value={shapeColor} onChange={handleColorChange} />
-              </li>
-              <li>
-                <button onClick={() => setShapeType('diamond')}>Diamond</button>
-                <input type="color" value={shapeColor} onChange={handleColorChange} />
-              </li>
-            </ul>
+            <input type="color" width="100%" value={shapeColor} onChange={handleColorChange} />
+            <FaSquare
+              style={{ color: shapeColor, cursor: 'pointer' }}
+              onClick={() => setShapeType('rectangle')}
+            />
+            <br />
+            <FaCircle
+              style={{ color: shapeColor, cursor: 'pointer' }}
+              onClick={() => setShapeType('circle')}
+            />
+            <br />
+            <IoIosArrowDropdownCircle
+              style={{ color: shapeColor, cursor: 'pointer' }}
+              onClick={() => setShapeType('triangle')}
+            />
+            <br />
+            <FaGem
+              style={{ color: shapeColor, cursor: 'pointer' }}
+              onClick={() => setShapeType('diamond')}
+            />
             <button onClick={handleDeleteShape}>Delete Shape</button>
           </Col>
 
