@@ -4,7 +4,7 @@
 /* eslint-disable react/button-has-type */
 import React, { useState, useRef, useEffect } from 'react';
 import {
-  Navbar, Nav, Container, Col, Row,
+  Navbar, Nav, Container, Col, Row, Form,
 } from 'react-bootstrap';
 import {
   Stage, Layer, Text, Arrow, Circle, Rect, RegularPolygon,
@@ -17,7 +17,8 @@ function App() {
   const [arrows, setArrows] = useState([]);
   const [selectedArrowIndex, setSelectedArrowIndex] = useState(null);
   const [shapes, setShapes] = useState([]);
-  const [selectedShapeIndex, setSelectedShapeIndex] = useState(null); // Add this state variable
+  const [selectedShapeIndex, setSelectedShapeIndex] = useState(null);
+  const [brandName, setBrandName] = useState('Blank diagram');
 
   useEffect(() => {
     const handleMouseDown = (e) => {
@@ -63,11 +64,13 @@ function App() {
         setSelectedArrowIndex(null);
       } else if (selectedShapeIndex !== null && arrowPoints) {
         const shape = shapes[selectedShapeIndex];
-        const { x, y } = shape.attrs;
-        const newArrowPoints = [...arrowPoints, x, y];
-        setArrows((prevArrows) => [...prevArrows, newArrowPoints]);
-        setArrowPoints(null);
-        setSelectedShapeIndex(null);
+        if (shape && shape.attrs) { // Null check for shape and shape.attrs
+          const { x, y } = shape.attrs;
+          const newArrowPoints = [...arrowPoints, x, y];
+          setArrows((prevArrows) => [...prevArrows, newArrowPoints]);
+          setArrowPoints(null);
+          setSelectedShapeIndex(null);
+        }
       } else if (arrowPoints) {
         // Draw an arrow from any point on the canvas
         setArrows((prevArrows) => [...prevArrows, arrowPoints]);
@@ -92,6 +95,16 @@ function App() {
     };
   }, [arrowPoints, selectedArrowIndex, selectedShapeIndex, shapes]);
 
+  const handleTextDblClick = (index) => {
+    const updatedShapes = [...shapes];
+    const shape = updatedShapes[index];
+    const newText = prompt('Enter text:');
+    if (newText !== null) {
+      shape.attrs.text = newText;
+      setShapes(updatedShapes);
+    }
+  };
+
   const addCircle = () => {
     const circle = {
       type: 'circle',
@@ -100,6 +113,9 @@ function App() {
         y: window.innerHeight / 2,
         radius: 50,
         fill: 'red',
+        text: '', // Initialize text property
+        fillText: 'white', // Add fillText property
+        fontSize: 12, // Add fontSize property
       },
     };
     setShapes([...shapes, circle]);
@@ -114,6 +130,9 @@ function App() {
         width: 100,
         height: 50,
         fill: 'blue',
+        text: '', // Initialize text property
+        fillText: 'white', // Add fillText property
+        fontSize: 12, // Add fontSize property
       },
     };
     setShapes([...shapes, rect]);
@@ -128,15 +147,40 @@ function App() {
         radius: 50,
         fill: 'green',
         rotation: 45,
+        text: '', // Initialize text property
+        fillText: 'white', // Add fillText property
+        fontSize: 12, // Add fontSize property
       },
     };
     setShapes([...shapes, diamond]);
   };
 
+  const addText = () => {
+    const text = {
+      type: 'text',
+      attrs: {
+        x: window.innerWidth / 2,
+        y: window.innerHeight / 2,
+        text: 'Sample Text', // Default text
+        fill: 'black',
+        fontSize: 18,
+        draggable: true,
+      },
+    };
+    setShapes([...shapes, text]);
+  };
+
   return (
     <div>
       <Navbar bg="light" variant="light">
-        <Navbar.Brand>Diagram Editor</Navbar.Brand>
+        <Navbar.Brand>
+          <Form.Control
+            type="text"
+            placeholder="Enter brand name"
+            value={brandName}
+            onChange={(e) => setBrandName(e.target.value)}
+          />
+        </Navbar.Brand>
         <Nav className="mr-auto">
           <Nav.Link>File</Nav.Link>
           <Nav.Link>Edit</Nav.Link>
@@ -153,6 +197,9 @@ function App() {
             <button onClick={addCircle}>Add Circle</button>
             <button onClick={addRectangle}>Add Rectangle</button>
             <button onClick={addDiamond}>Add Diamond</button>
+            <button onClick={addText}>Add Text</button>
+            {' '}
+            {/* Button to add text */}
           </Col>
 
           {/* Main Content */}
@@ -165,34 +212,76 @@ function App() {
               >
                 <Layer ref={layerRef}>
                   {shapes.map((shape, index) => {
-                    switch (shape.type) {
-                      case 'circle':
-                        return (
-                          <Circle
-                            key={index}
-                            {...shape.attrs}
-                            draggable
-                          />
-                        );
-                      case 'rect':
-                        return (
-                          <Rect
-                            key={index}
-                            {...shape.attrs}
-                            draggable
-                          />
-                        );
-                      case 'diamond':
-                        return (
-                          <RegularPolygon
-                            key={index}
-                            {...shape.attrs}
-                            sides={4}
-                            draggable
-                          />
-                        );
-                      default:
-                        return null;
+                    if (shape && shape.attrs) { // Check if shape and shape.attrs are defined
+                      switch (shape.type) {
+                        case 'circle':
+                          return (
+                            <React.Fragment key={index}>
+                              <Circle
+                                {...shape.attrs}
+                                draggable
+                                onDblClick={() => handleTextDblClick(index)}
+                              />
+                              <Text
+                                text={shape.attrs.text}
+                                x={shape.attrs.x - 20} // Adjust position as needed
+                                y={shape.attrs.y - 10} // Adjust position as needed
+                                fill={shape.attrs.fillText}
+                                fontSize={shape.attrs.fontSize}
+                                visible={!!shape.attrs.text}
+                              />
+                            </React.Fragment>
+                          );
+                        case 'rect':
+                          return (
+                            <React.Fragment key={index}>
+                              <Rect
+                                {...shape.attrs}
+                                draggable
+                                onDblClick={() => handleTextDblClick(index)}
+                              />
+                              <Text
+                                text={shape.attrs.text}
+                                x={shape.attrs.x + 5} // Adjust position as needed
+                                y={shape.attrs.y + 20} // Adjust position as needed
+                                fill={shape.attrs.fillText}
+                                fontSize={shape.attrs.fontSize}
+                                visible={!!shape.attrs.text}
+                              />
+                            </React.Fragment>
+                          );
+                        case 'diamond':
+                          return (
+                            <React.Fragment key={index}>
+                              <RegularPolygon
+                                {...shape.attrs}
+                                sides={4}
+                                draggable
+                                onDblClick={() => handleTextDblClick(index)}
+                              />
+                              <Text
+                                text={shape.attrs.text}
+                                x={shape.attrs.x - 25} // Adjust position as needed
+                                y={shape.attrs.y - 10} // Adjust position as needed
+                                fill={shape.attrs.fillText}
+                                fontSize={shape.attrs.fontSize}
+                                visible={!!shape.attrs.text}
+                              />
+                            </React.Fragment>
+                          );
+                        case 'text':
+                          return (
+                            <Text
+                              key={index}
+                              {...shape.attrs}
+                              onDblClick={() => handleTextDblClick(index)}
+                            />
+                          );
+                        default:
+                          return null;
+                      }
+                    } else {
+                      return null;
                     }
                   })}
                   {arrows.map((points, index) => (
