@@ -1,107 +1,98 @@
-/* eslint-disable react/jsx-props-no-spreading */
-/* eslint-disable react/no-array-index-key */
 /* eslint-disable no-unused-vars */
 /* eslint-disable react/button-has-type */
+/* eslint-disable react/no-array-index-key */
+/* eslint-disable react/jsx-props-no-spreading */
 import React, { useState, useRef, useEffect } from 'react';
 import {
   Navbar, Nav, Container, Col, Row, Form,
 } from 'react-bootstrap';
 import {
-  Stage, Layer, Text, Arrow, Circle, Rect, RegularPolygon,
+  Stage, Layer, Text, Circle, Rect, RegularPolygon,
 } from 'react-konva';
 
 function App() {
   const stageRef = useRef(null);
   const layerRef = useRef(null);
-  const [arrowPoints, setArrowPoints] = useState(null);
-  const [arrows, setArrows] = useState([]);
-  const [selectedArrowIndex, setSelectedArrowIndex] = useState(null);
   const [shapes, setShapes] = useState([]);
   const [selectedShapeIndex, setSelectedShapeIndex] = useState(null);
   const [brandName, setBrandName] = useState('Blank diagram');
+  const [undoStack, setUndoStack] = useState([]);
+  const [redoStack, setRedoStack] = useState([]);
+
+  const applyAction = (action, type) => {
+    const { shape, index } = action;
+    const updatedShapes = [...shapes];
+    switch (type) {
+      case 'undo':
+        if (shape) {
+          updatedShapes.splice(index, 1);
+        }
+        break;
+      case 'redo':
+        if (shape) {
+          updatedShapes.splice(index, 0, shape);
+        }
+        break;
+      default:
+        break;
+    }
+    setShapes(updatedShapes);
+  };
 
   useEffect(() => {
-    const handleMouseDown = (e) => {
-      const stageElement = stageRef.current;
-      const layer = layerRef.current;
-      if (!stageElement) return;
-
-      const pos = stageElement.getPointerPosition();
-      const selectedShape = layer.getIntersection(pos);
-
-      if (selectedShape) {
-        const { className } = selectedShape;
-        if (className === 'Circle' || className === 'Rect' || className === 'RegularPolygon') {
-          const shapeIndex = selectedShape.index;
-          setSelectedArrowIndex(null);
-          setArrowPoints([pos.x, pos.y, pos.x, pos.y]);
-          setSelectedShapeIndex(shapeIndex);
+    const handleUndoRedo = (e) => {
+      if (e.ctrlKey) {
+        if (e.key === 'z' && undoStack.length > 0) {
+          const lastAction = undoStack.pop();
+          setRedoStack([...redoStack, lastAction]);
+          applyAction(lastAction, 'undo');
+        } else if (e.key === 'y' && redoStack.length > 0) {
+          const lastAction = redoStack.pop();
+          setUndoStack([...undoStack, lastAction]);
+          applyAction(lastAction, 'redo');
         }
-      } else {
-        setArrowPoints([pos.x, pos.y, pos.x, pos.y]);
-        setSelectedShapeIndex(null);
-        setSelectedArrowIndex(null);
       }
     };
 
-    const handleMouseMove = () => {
-      const stageElement = stageRef.current;
-      if (!stageElement) return;
-      if (arrowPoints) {
-        const pos = stageElement.getPointerPosition();
-        setArrowPoints((prevPoints) => [prevPoints[0], prevPoints[1], pos.x, pos.y]);
-      }
-    };
-
-    const handleMouseUp = () => {
-      if (selectedArrowIndex !== null && arrowPoints) {
-        setArrows((prevArrows) => {
-          const updatedArrows = [...prevArrows];
-          updatedArrows[selectedArrowIndex] = arrowPoints;
-          return updatedArrows;
-        });
-        setArrowPoints(null);
-        setSelectedArrowIndex(null);
-      } else if (selectedShapeIndex !== null && arrowPoints) {
-        const shape = shapes[selectedShapeIndex];
-        if (shape && shape.attrs) { // Null check for shape and shape.attrs
-          const { x, y } = shape.attrs;
-          const newArrowPoints = [...arrowPoints, x, y];
-          setArrows((prevArrows) => [...prevArrows, newArrowPoints]);
-          setArrowPoints(null);
-          setSelectedShapeIndex(null);
-        }
-      } else if (arrowPoints) {
-        // Draw an arrow from any point on the canvas
-        setArrows((prevArrows) => [...prevArrows, arrowPoints]);
-        setArrowPoints(null);
-        setSelectedShapeIndex(null);
-      }
-    };
-
-    document.addEventListener('mousemove', handleMouseMove);
-    const stageElement = stageRef.current;
-    if (stageElement) {
-      stageElement.addEventListener('mousedown', handleMouseDown);
-      stageElement.addEventListener('mouseup', handleMouseUp);
-    }
+    document.addEventListener('keydown', handleUndoRedo);
 
     return () => {
-      document.removeEventListener('mousemove', handleMouseMove);
-      if (stageElement) {
-        stageElement.removeEventListener('mousedown', handleMouseDown);
-        stageElement.removeEventListener('mouseup', handleMouseUp);
-      }
+      document.removeEventListener('keydown', handleUndoRedo);
     };
-  }, [arrowPoints, selectedArrowIndex, selectedShapeIndex, shapes]);
+  }, [undoStack, redoStack, shapes]);
+
+  const handleMouseDown = (e) => {
+    const stageElement = stageRef.current;
+    const layer = layerRef.current;
+    if (!stageElement) return;
+
+    const pos = stageElement.getPointerPosition();
+    const selectedShape = layer.getIntersection(pos);
+
+    if (selectedShape) {
+      const { className } = selectedShape;
+      if (className === 'Circle' || className === 'Rect' || className === 'RegularPolygon') {
+        const shapeIndex = selectedShape.index;
+        setSelectedShapeIndex(shapeIndex);
+      }
+    } else {
+      setSelectedShapeIndex(null);
+    }
+  };
 
   const handleTextDblClick = (index) => {
     const updatedShapes = [...shapes];
     const shape = updatedShapes[index];
-    const newText = prompt('Enter text:');
-    if (newText !== null) {
-      shape.attrs.text = newText;
-      setShapes(updatedShapes);
+
+    // Check if the shape is a text shape
+    if (shape && shape.type === 'text' && shape.attrs) {
+      const newText = prompt('Enter new text:', shape.attrs.text);
+      if (newText !== null) {
+        shape.attrs.text = newText;
+        const action = { shape, index, type: 'update' };
+        setUndoStack([...undoStack, action]);
+        setShapes(updatedShapes);
+      }
     }
   };
 
@@ -118,7 +109,10 @@ function App() {
         fontSize: 12, // Add fontSize property
       },
     };
+    const action = { shape: circle, index: shapes.length };
+    setUndoStack([...undoStack, action]);
     setShapes([...shapes, circle]);
+    setRedoStack([]); // Clear redo stack when a new action is performed
   };
 
   const addRectangle = () => {
@@ -135,7 +129,10 @@ function App() {
         fontSize: 12, // Add fontSize property
       },
     };
+    const action = { shape: rect, index: shapes.length };
+    setUndoStack([...undoStack, action]);
     setShapes([...shapes, rect]);
+    setRedoStack([]); // Clear redo stack when a new action is performed
   };
 
   const addDiamond = () => {
@@ -145,14 +142,17 @@ function App() {
         x: window.innerWidth / 2,
         y: window.innerHeight / 2,
         radius: 50,
-        fill: 'green',
-        rotation: 45,
+        fill: 'cyan',
+        rotation: 90,
         text: '', // Initialize text property
         fillText: 'white', // Add fillText property
         fontSize: 12, // Add fontSize property
       },
     };
+    const action = { shape: diamond, index: shapes.length };
+    setUndoStack([...undoStack, action]);
     setShapes([...shapes, diamond]);
+    setRedoStack([]); // Clear redo stack when a new action is performed
   };
 
   const addText = () => {
@@ -167,7 +167,26 @@ function App() {
         draggable: true,
       },
     };
+    const action = { shape: text, index: shapes.length };
+    setUndoStack([...undoStack, action]);
     setShapes([...shapes, text]);
+    setRedoStack([]); // Clear redo stack when a new action is performed
+  };
+
+  const handleUndo = () => {
+    if (undoStack.length > 0) {
+      const lastAction = undoStack.pop();
+      setRedoStack([...redoStack, lastAction]);
+      applyAction(lastAction, 'undo');
+    }
+  };
+
+  const handleRedo = () => {
+    if (redoStack.length > 0) {
+      const lastAction = redoStack.pop();
+      setUndoStack([...undoStack, lastAction]);
+      applyAction(lastAction, 'redo');
+    }
   };
 
   return (
@@ -181,6 +200,10 @@ function App() {
             onChange={(e) => setBrandName(e.target.value)}
           />
         </Navbar.Brand>
+        <Nav>
+          <Nav.Link onClick={() => handleUndo()}>Undo</Nav.Link>
+          <Nav.Link onClick={() => handleRedo()}>Redo</Nav.Link>
+        </Nav>
         <Nav className="mr-auto">
           <Nav.Link>File</Nav.Link>
           <Nav.Link>Edit</Nav.Link>
@@ -210,7 +233,7 @@ function App() {
                 height={window.innerHeight}
                 ref={stageRef}
               >
-                <Layer ref={layerRef}>
+                <Layer ref={layerRef} onMouseDown={handleMouseDown}>
                   {shapes.map((shape, index) => {
                     if (shape && shape.attrs) { // Check if shape and shape.attrs are defined
                       switch (shape.type) {
@@ -284,21 +307,6 @@ function App() {
                       return null;
                     }
                   })}
-                  {arrows.map((points, index) => (
-                    <Arrow
-                      key={index}
-                      points={points}
-                      stroke="black"
-                      fill="black"
-                    />
-                  ))}
-                  {arrowPoints && (
-                    <Arrow
-                      points={arrowPoints}
-                      stroke="black"
-                      fill="black"
-                    />
-                  )}
                 </Layer>
               </Stage>
             </div>
