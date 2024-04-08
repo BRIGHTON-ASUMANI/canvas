@@ -104,7 +104,8 @@ function App() {
         x: window.innerWidth / 2,
         y: window.innerHeight / 2,
         radius: 50,
-        fill: 'red',
+        fill: 'transparent', // Inside color
+        stroke: 'red', // Border color
         text: '', // Initialize text property
         fillText: 'white', // Add fillText property
         fontSize: 12, // Add fontSize property
@@ -124,7 +125,8 @@ function App() {
         y: window.innerHeight / 2 - 25,
         width: 100,
         height: 50,
-        fill: 'blue',
+        fill: 'transparent', // Inside color
+        stroke: 'blue', // Border color
         text: '', // Initialize text property
         fillText: 'white', // Add fillText property
         fontSize: 12, // Add fontSize property
@@ -143,7 +145,8 @@ function App() {
         x: window.innerWidth / 2,
         y: window.innerHeight / 2,
         radius: 50,
-        fill: 'cyan',
+        fill: 'transparent', // Inside color
+        stroke: 'cyan', // Border color
         rotation: 90,
         text: '', // Initialize text property
         fillText: 'white', // Add fillText property
