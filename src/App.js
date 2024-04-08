@@ -242,10 +242,10 @@ light">
         <Row>
           {/* Sidebar */}
           <Col md={2} style={{ backgroundColor: '#f0f0f0', padding: '10px' }}>
-            <button onClick={addCircle}>Add Circle</button>
-            <button onClick={addRectangle}>Add Rectangle</button>
-            <button onClick={addDiamond}>Add Diamond</button>
-            <button onClick={addText}>Add Text</button>
+            <Button onClick={addCircle}>Add Circle</Button>
+            <Button onClick={addRectangle}>Add Rectangle</Button>
+            <Button onClick={addDiamond}>Add Diamond</Button>
+            <Button onClick={addText}>Add Text</Button>
             <Button variant="primary" onClick={handleDownload}>Download Screenshot</Button>
 
             {' '}
