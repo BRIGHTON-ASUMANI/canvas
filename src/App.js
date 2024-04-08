@@ -4,11 +4,12 @@
 /* eslint-disable react/jsx-props-no-spreading */
 import React, { useState, useRef, useEffect } from 'react';
 import {
-  Navbar, Nav, Container, Col, Row, Form,
+  Navbar, Nav, Container, Col, Row, Form, Button,
 } from 'react-bootstrap';
 import {
   Stage, Layer, Text, Circle, Rect, RegularPolygon,
 } from 'react-konva';
+import './App.css'; // Import the CSS file for styling
 
 function App() {
   const stageRef = useRef(null);
@@ -71,7 +72,7 @@ function App() {
 
     if (selectedShape) {
       const { className } = selectedShape;
-      if (className === 'Circle' || className === 'Rect' || className === 'RegularPolygon') {
+      if (className === 'Circle' || className === 'Rect' || className === 'RegularPolygon' || className === 'Text') {
         const shapeIndex = selectedShape.index;
         setSelectedShapeIndex(shapeIndex);
       }
@@ -189,9 +190,31 @@ function App() {
     }
   };
 
+  const handleDelete = () => {
+    if (selectedShapeIndex !== null) {
+      const updatedShapes = shapes.filter((shape, index) => index !== selectedShapeIndex);
+      setShapes(updatedShapes);
+      setSelectedShapeIndex(null);
+    }
+  };
+
+  const handleDownload = () => {
+    const stage = stageRef.current.getStage();
+    const dataURL = stage.toDataURL();
+    const link = document.createElement('a');
+    link.download = 'canvas_screenshot.png';
+    link.href = dataURL;
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+  };
+
   return (
     <div>
-      <Navbar bg="light" variant="light">
+      <Navbar
+        bg="light"
+        variant="
+light">
         <Navbar.Brand>
           <Form.Control
             type="text"
@@ -203,6 +226,9 @@ function App() {
         <Nav>
           <Nav.Link onClick={() => handleUndo()}>Undo</Nav.Link>
           <Nav.Link onClick={() => handleRedo()}>Redo</Nav.Link>
+          <Nav.Link onClick={() => handleDelete()}>Delete</Nav.Link>
+          {' '}
+          {/* Delete button */}
         </Nav>
         <Nav className="mr-auto">
           <Nav.Link>File</Nav.Link>
@@ -212,7 +238,6 @@ function App() {
           <Nav.Link>Insert</Nav.Link>
         </Nav>
       </Navbar>
-
       <Container fluid>
         <Row>
           {/* Sidebar */}
@@ -221,6 +246,8 @@ function App() {
             <button onClick={addRectangle}>Add Rectangle</button>
             <button onClick={addDiamond}>Add Diamond</button>
             <button onClick={addText}>Add Text</button>
+            <Button variant="primary" onClick={handleDownload}>Download Screenshot</Button>
+
             {' '}
             {/* Button to add text */}
           </Col>
@@ -236,76 +263,85 @@ function App() {
                 <Layer ref={layerRef} onMouseDown={handleMouseDown}>
                   {shapes.map((shape, index) => {
                     if (shape && shape.attrs) { // Check if shape and shape.attrs are defined
-                      switch (shape.type) {
-                        case 'circle':
-                          return (
-                            <React.Fragment key={index}>
-                              <Circle
-                                {...shape.attrs}
-                                draggable
-                                onDblClick={() => handleTextDblClick(index)}
-                              />
-                              <Text
-                                text={shape.attrs.text}
-                                x={shape.attrs.x - 20} // Adjust position as needed
-                                y={shape.attrs.y - 10} // Adjust position as needed
-                                fill={shape.attrs.fillText}
-                                fontSize={shape.attrs.fontSize}
-                                visible={!!shape.attrs.text}
-                              />
-                            </React.Fragment>
-                          );
-                        case 'rect':
-                          return (
-                            <React.Fragment key={index}>
-                              <Rect
-                                {...shape.attrs}
-                                draggable
-                                onDblClick={() => handleTextDblClick(index)}
-                              />
-                              <Text
-                                text={shape.attrs.text}
-                                x={shape.attrs.x + 5} // Adjust position as needed
-                                y={shape.attrs.y + 20} // Adjust position as needed
-                                fill={shape.attrs.fillText}
-                                fontSize={shape.attrs.fontSize}
-                                visible={!!shape.attrs.text}
-                              />
-                            </React.Fragment>
-                          );
-                        case 'diamond':
-                          return (
-                            <React.Fragment key={index}>
-                              <RegularPolygon
-                                {...shape.attrs}
-                                sides={4}
-                                draggable
-                                onDblClick={() => handleTextDblClick(index)}
-                              />
-                              <Text
-                                text={shape.attrs.text}
-                                x={shape.attrs.x - 25} // Adjust position as needed
-                                y={shape.attrs.y - 10} // Adjust position as needed
-                                fill={shape.attrs.fillText}
-                                fontSize={shape.attrs.fontSize}
-                                visible={!!shape.attrs.text}
-                              />
-                            </React.Fragment>
-                          );
-                        case 'text':
-                          return (
-                            <Text
-                              key={index}
+                      const isSelected = selectedShapeIndex === index;
+                      return (
+                        <React.Fragment key={index}>
+                          {shape.type === 'circle' && (
+                          <>
+                            <Circle
                               {...shape.attrs}
+                              draggable
                               onDblClick={() => handleTextDblClick(index)}
+                              className={isSelected ? 'selected' : ''}
                             />
-                          );
-                        default:
-                          return null;
-                      }
-                    } else {
-                      return null;
+                            <Text
+                              text={shape.attrs.text}
+                              x={shape.attrs.x - 20} // Adjust position as needed
+                              y={shape.attrs.y - 10} // Adjust position as needed
+                              fill={shape.attrs.fillText}
+                              fontSize={shape.attrs.fontSize}
+                              visible={!!shape.attrs.text}
+                              width={60} // Set the width to limit text to 30 characters
+                              align="center" // Align text to center
+                              wrap="word" // Wrap text by word
+                            />
+                          </>
+                          )}
+                          {shape.type === 'rect' && (
+                          <>
+                            <Rect
+                              {...shape.attrs}
+                              draggable
+                              onDblClick={() => handleTextDblClick(index)}
+                              className={isSelected ? 'selected' : ''}
+                            />
+                            <Text
+                              text={shape.attrs.text}
+                              x={shape.attrs.x + 5} // Adjust position as needed
+                              y={shape.attrs.y + 20} // Adjust position as needed
+                              fill={shape.attrs.fillText}
+                              fontSize={shape.attrs.fontSize}
+                              visible={!!shape.attrs.text}
+                              width={60} // Set the width to limit text to 30 characters
+                              align="center" // Align text to center
+                              wrap="word" // Wrap text by word
+                            />
+                          </>
+                          )}
+                          {shape.type === 'diamond' && (
+                          <>
+                            <RegularPolygon
+                              {...shape.attrs}
+                              sides={4}
+                              draggable
+                              onDblClick={() => handleTextDblClick(index)}
+                              className={isSelected ? 'selected' : ''}
+                            />
+                            <Text
+                              text={shape.attrs.text}
+                              x={shape.attrs.x - 25} // Adjust position as needed
+                              y={shape.attrs.y - 10} // Adjust position as needed
+                              fill={shape.attrs.fillText}
+                              fontSize={shape.attrs.fontSize}
+                              visible={!!shape.attrs.text}
+                              width={60} // Set the width to limit text to 30 characters
+                              align="center" // Align text to center
+                              wrap="word" // Wrap text by word
+                            />
+                          </>
+                          )}
+                          {shape.type === 'text' && (
+                          <Text
+                            key={index}
+                            {...shape.attrs}
+                            onDblClick={() => handleTextDblClick(index)}
+                            className={isSelected ? 'selected' : ''}
+                          />
+                          )}
+                        </React.Fragment>
+                      );
                     }
+                    return null;
                   })}
                 </Layer>
               </Stage>

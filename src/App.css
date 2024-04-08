@@ -36,3 +36,7 @@
     transform: rotate(360deg);
   }
 }
+
+.selected {
+  outline: 2px solid blue; /* Example styling for the selected shape */
+}
