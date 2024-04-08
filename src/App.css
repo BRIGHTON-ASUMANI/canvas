@@ -40,3 +40,43 @@
 .selected {
   outline: 2px solid blue; /* Example styling for the selected shape */
 }
+
+
+.bg-light {
+  border: 1px solid rgba(0, 0, 0, .1);
+  padding: 0px !important;
+}
+
+
+.sidebar {
+  background-color: #f0f0f0;
+  padding: 10px;
+}
+
+.shape-container {
+  display: flex;
+  flex-wrap: wrap; /* Wrap items if they exceed the container width */
+  justify-content: space-between; /* Space items evenly */
+}
+
+.shape-container svg {
+  width: 48%; /* Set width to fit two shapes in one line */
+  margin-bottom: 10px;
+  cursor: pointer;
+}
+
+.shape-container svg:hover {
+  fill: lightgray; /* Change fill color on hover */
+}
+
+
+.delete-shape {
+  display: flex;
+  align-items: center;
+  color: red; /* Change color as needed */
+  text-decoration: none;
+}
+
+.delete-shape span {
+  margin-left: 5px;
+}
