@@ -37,14 +37,11 @@
   }
 }
 
-.selected {
-  outline: 2px solid blue; /* Example styling for the selected shape */
-}
-
 
 .bg-light {
   border: 1px solid rgba(0, 0, 0, .1);
   padding: 0px !important;
+  color:#000 !important;
 }
 
 
@@ -67,8 +64,8 @@
 
 .shape-container svg:hover {
   fill: lightgray; /* Change fill color on hover */
+  cursor: pointer; /* Change cursor to pointer on hover */
 }
-
 
 .delete-shape {
   display: flex;
@@ -79,4 +76,15 @@
 
 .delete-shape span {
   margin-left: 5px;
+}
+
+
+
+.selected {
+  outline: 2px dashed #000; /* Add a dashed outline to highlight the selected shape */
+  cursor: pointer; /* Change cursor to pointer when hovering over the selected shape */
+}
+
+.selected:hover {
+  outline: 2px dashed red; /* Change the outline color when hovering over the selected shape */
 }

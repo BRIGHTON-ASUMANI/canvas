@@ -11,6 +11,7 @@ import {
 } from 'react-bootstrap';
 import {
   Stage, Layer, Text, Circle, Rect, RegularPolygon,
+  Transformer,
 } from 'react-konva';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import { faUndo, faRedo, faTrash } from '@fortawesome/free-solid-svg-icons';
@@ -24,6 +25,55 @@ function App() {
   const [brandName, setBrandName] = useState('Name of the project');
   const [undoStack, setUndoStack] = useState([]);
   const [redoStack, setRedoStack] = useState([]);
+  const [circleColor, setCircleColor] = useState('red');
+  const [rectangleColor, setRectangleColor] = useState('blue');
+  const [diamondColor, setDiamondColor] = useState('cyan');
+  const [textColor, setTextColor] = useState('black');
+  const [selectedId, setSelectedId] = useState(null);
+  const trRef = useRef();
+
+  useEffect(() => {
+    if (selectedId) {
+      trRef.current.nodes([stageRef.current.findOne(`#${selectedId}`)]);
+      trRef.current.getLayer().batchDraw();
+    }
+  }, [selectedId]);
+
+  const checkDeselect = (e) => {
+    const clickedOnEmpty = e.target === e.target.getStage();
+    if (clickedOnEmpty) {
+      setSelectedId(null);
+    }
+  };
+
+  const handleDragEnd = (index, e) => {
+    const newShapes = [...shapes];
+    newShapes[index] = {
+      ...newShapes[index],
+      x: e.target.x(),
+      y: e.target.y(),
+    };
+    setShapes(newShapes);
+  };
+
+  const handleTransformEnd = (index, e) => {
+    const node = e.target;
+    const scaleX = node.scaleX();
+    const scaleY = node.scaleY();
+    const width = Math.max(5, node.width() * scaleX);
+    const height = Math.max(node.height() * scaleY);
+    const newShapes = [...shapes];
+    newShapes[index] = {
+      ...newShapes[index],
+      x: node.x(),
+      y: node.y(),
+      width,
+      height,
+    };
+    setShapes(newShapes);
+    node.scaleX(1);
+    node.scaleY(1);
+  };
 
   const applyAction = (action, type) => {
     const { shape, index } = action;
@@ -77,12 +127,19 @@ function App() {
 
     if (selectedShape) {
       const { className } = selectedShape;
-      if (className === 'Circle' || className === 'Rect' || className === 'RegularPolygon' || className === 'Text') {
+      if (
+        className === 'Circle'
+        || className === 'Rect'
+        || className === 'RegularPolygon'
+        || className === 'Text'
+      ) {
         const shapeIndex = selectedShape.index;
         setSelectedShapeIndex(shapeIndex);
+        setSelectedId(selectedShape.attrs.id); // Update selectedId state as well
       }
     } else {
       setSelectedShapeIndex(null);
+      setSelectedId(null); // Clear selectedId state when clicking on empty area
     }
   };
 
@@ -91,10 +148,10 @@ function App() {
     const shape = updatedShapes[index];
 
     // Check if the shape is a text shape
-    if (shape && shape.type === 'text' && shape.attrs) {
-      const newText = prompt('Enter new text:', shape.attrs.text);
+    if (shape && shape.type === 'text') {
+      const newText = prompt('Enter new text:', shape.text);
       if (newText !== null) {
-        shape.attrs.text = newText;
+        shape.text = newText;
         const action = { shape, index, type: 'update' };
         setUndoStack([...undoStack, action]);
         setShapes(updatedShapes);
@@ -105,84 +162,84 @@ function App() {
   const addCircle = () => {
     const circle = {
       type: 'circle',
-      attrs: {
-        x: window.innerWidth / 2,
-        y: window.innerHeight / 2,
-        radius: 50,
-        fill: 'transparent', // Inside color
-        stroke: 'red', // Border color
-        text: '', // Initialize text property
-        strokeWidth: 5,
-        fillText: 'white', // Add fillText property
-        fontSize: 12, // Add fontSize property
-      },
+      x: window.innerWidth / 2,
+      y: window.innerHeight / 2,
+      radius: 50,
+      fill: 'transparent', // Inside color
+      stroke: circleColor, // Border color
+      text: '', // Initialize text property
+      strokeWidth: 3,
+      fillText: 'white', // Add fillText property
+      fontSize: 12, // Add fontSize property
+      id: `circle${shapes.length + 1}`,
     };
     const action = { shape: circle, index: shapes.length };
     setUndoStack([...undoStack, action]);
     setShapes([...shapes, circle]);
-    setRedoStack([]); // Clear redo stack when a new action is performed
+    setSelectedId(circle.id);
+    setRedoStack([]);
   };
 
   const addRectangle = () => {
     const rect = {
       type: 'rect',
-      attrs: {
-        x: window.innerWidth / 2,
-        y: window.innerHeight / 2,
-        width: 150,
-        height: 100,
-        fill: 'transparent', // Inside color
-        stroke: 'blue', // Border color
-        strokeWidth: 5,
-        text: 'teststst', // Initialize text property
-        fillText: 'white', // Add fillText property
-        fontSize: 12, // Add fontSize property
-      },
+      x: window.innerWidth / 2,
+      y: window.innerHeight / 2,
+      width: 150,
+      height: 100,
+      fill: 'transparent', // Inside color
+      stroke: rectangleColor, // Border color
+      strokeWidth: 3,
+      fontSize: 12, // Add fontSize property
+      id: `rect${shapes.length + 1}`,
+
     };
     const action = { shape: rect, index: shapes.length };
     setUndoStack([...undoStack, action]);
     setShapes([...shapes, rect]);
-    setRedoStack([]); // Clear redo stack when a new action is performed
+    setSelectedId(rect.id);
+    setRedoStack([]);
   };
 
   const addDiamond = () => {
     const diamond = {
       type: 'diamond',
-      attrs: {
-        x: window.innerWidth / 2,
-        y: window.innerHeight / 2,
-        radius: 50,
-        fill: 'transparent', // Inside color
-        stroke: 'cyan', // Border color
-        strokeWidth: 5,
-        rotation: 90,
-        text: '', // Initialize text property
-        fillText: 'white', // Add fillText property
-        fontSize: 12, // Add fontSize property
-      },
+      x: window.innerWidth / 2,
+      y: window.innerHeight / 2,
+      sides: 4, // A diamond is essentially a square (4 sides)
+      radius: 50 * Math.sqrt(2), // Calculate radius based on side length for a regular polygon
+      fill: 'transparent',
+      stroke: diamondColor,
+      strokeWidth: 3,
+      rotation: 45, // Rotate the square to make it look like a diamond
+      text: '', // Initialize text property
+      fillText: 'white', // Add fillText property
+      fontSize: 12, // Add fontSize property
+      id: `diamond${shapes.length + 1}`,
     };
     const action = { shape: diamond, index: shapes.length };
     setUndoStack([...undoStack, action]);
     setShapes([...shapes, diamond]);
-    setRedoStack([]); // Clear redo stack when a new action is performed
+    setSelectedId(diamond.id);
+    setRedoStack([]);
   };
 
   const addText = () => {
     const text = {
       type: 'text',
-      attrs: {
-        x: window.innerWidth / 2,
-        y: window.innerHeight / 2,
-        text: 'Sample Text', // Default text
-        fill: 'black',
-        fontSize: 18,
-        draggable: true,
-      },
+      x: window.innerWidth / 2,
+      y: window.innerHeight / 2,
+      text: 'Sample Text', // Default text
+      fill: textColor,
+      fontSize: 18,
+      draggable: true,
+      // id: `text${shapes.length + 1}`,
     };
     const action = { shape: text, index: shapes.length };
     setUndoStack([...undoStack, action]);
     setShapes([...shapes, text]);
-    setRedoStack([]); // Clear redo stack when a new action is performed
+    // setSelectedId(text.id);
+    setRedoStack([]);
   };
 
   const handleUndo = () => {
@@ -246,13 +303,6 @@ light">
 &nbsp;
             Redo
           </Nav.Link>
-          <Nav.Link onClick={() => handleDelete()}>
-            {' '}
-            <FontAwesomeIcon icon={faTrash} />
-&nbsp;
-            Delete
-          </Nav.Link>
-
         </Nav>
         <Nav className="mr-auto">
           <Dropdown>
@@ -282,24 +332,82 @@ light">
         <Row>
           <Col md={2} className="sidebar">
             <Card className="px-2 pt-2">
-              <h6>Add Shapes</h6>
-              <div className="shape-container">
-                <svg width="40" height="40" onClick={addCircle}>
-                  <circle stroke="black" strokeWidth="3" fill="transparent" cx="20" cy="20" r="18" />
-                </svg>
-                <svg width="40" height="40" onClick={addRectangle}>
-                  <rect stroke="black" strokeWidth="3" fill="transparent" x="2" y="2" width="46" height="26" />
-                </svg>
-                <svg width="40" height="40" onClick={addDiamond}>
-                  <polygon stroke="black" strokeWidth="3" fill="transparent" rotate={90} points="20,2 38,20 20,38 2,20" />
-                </svg>
-                <svg width="50" height="50" onClick={addText}>
-                  <text stroke="black" strokeWidth="3" x="10" y="30" fontSize="24" fontWeight="bold">T</text>
-                </svg>
+              <div>
+                <h6>Add Colors</h6>
+                <div className="shape-container">
+                  {/* Input for Circle Color */}
+                  <Form.Group controlId="circleColor">
+                    <Form.Label>Circle Color</Form.Label>
+                    <Form.Control
+                      type="color"
+                      value={circleColor}
+                      onChange={(e) => setCircleColor(e.target.value)}
+                    />
+                  </Form.Group>
 
-                <div onClick={() => handleDelete()}>
-                  <span>Delete shape</span>
-                  <FontAwesomeIcon icon={faTrash} />
+                  {/* Input for Rectangle Color */}
+                  <Form.Group controlId="rectangleColor">
+                    <Form.Label>Rectangle Color</Form.Label>
+                    <Form.Control
+                      type="color"
+                      value={rectangleColor}
+                      onChange={(e) => setRectangleColor(e.target.value)}
+                    />
+                  </Form.Group>
+
+                  {/* Input for Diamond Color */}
+                  <Form.Group controlId="diamondColor">
+                    <Form.Label>Diamond Color</Form.Label>
+                    <Form.Control
+                      type="color"
+                      value={diamondColor}
+                      onChange={(e) => setDiamondColor(e.target.value)}
+                    />
+                  </Form.Group>
+
+                  {/* Input for Text Color */}
+                  <Form.Group controlId="textColor">
+                    <Form.Label>Text Color</Form.Label>
+                    <Form.Control
+                      type="color"
+                      value={textColor}
+                      onChange={(e) => setTextColor(e.target.value)}
+                    />
+                  </Form.Group>
+                </div>
+              </div>
+              <hr />
+              {' '}
+              {/* Divider between color and shape sections */}
+              <div>
+                <h6>Add Shapes & Text</h6>
+                <div className="shape-container">
+                  {/* SVG Icons for adding shapes */}
+                  <div className="shape-icons">
+                    <svg width="40" height="40" onClick={addCircle}>
+                      <circle stroke="black" strokeWidth="3" fill="transparent" cx="20" cy="20" r="18" />
+                    </svg>
+                    <svg width="40" height="40" onClick={addRectangle}>
+                      <rect stroke="black" strokeWidth="3" fill="transparent" x="2" y="2" width="46" height="26" />
+                    </svg>
+                    <svg width="40" height="40" onClick={addDiamond}>
+                      <polygon stroke="black" strokeWidth="3" fill="transparent" rotate={90} points="20,2 38,20 20,38 2,20" />
+                    </svg>
+                    <svg width="50" height="50" onClick={addText}>
+                      <text stroke="black" strokeWidth="3" x="10" y="30" fontSize="24" fontWeight="bold">T</text>
+                    </svg>
+                  </div>
+
+                  {/* Delete shape button */}
+                  {/* <div className="delete-shape" onClick={() => handleDelete()}> */}
+                  {/* <span>Delete shape</span> */}
+                  {/* <FontAwesomeIcon
+                      icon={faTrash}
+                      size="5x"
+                      shake={selectedShapeIndex !== null}
+                      onClick={() => handleDelete()}
+                    /> */}
+                  {/* </div> */}
                 </div>
               </div>
             </Card>
@@ -312,46 +420,61 @@ light">
                 height={window.innerHeight}
                 ref={stageRef}
               >
-                <Layer ref={layerRef} onMouseDown={handleMouseDown}>
+                <Layer>
                   {shapes.map((shape, index) => {
-                    if (shape && shape.attrs) { // Check if shape and shape.attrs are defined
-                      const isSelected = selectedShapeIndex === index;
+                    if (shape) {
                       return (
                         <React.Fragment key={index}>
                           {shape.type === 'circle' && (
                           <Circle
-                            {...shape.attrs}
+                            {...shape}
                             draggable
-                            onDblClick={() => handleTextDblClick(index)}
-                            className={isSelected ? 'selected' : ''}
+                            onClick={() => setSelectedId(shape.id)}
+                            onTap={() => setSelectedId(shape.id)}
+                            onDragEnd={(e) => handleDragEnd(index, e)}
                           />
                           )}
                           {shape.type === 'rect' && (
                           <Rect
-                            {...shape.attrs}
+                            {...shape}
                             draggable
-                            onDblClick={() => handleTextDblClick(index)}
-                            className={isSelected ? 'selected' : ''}
+                            onClick={() => setSelectedId(shape.id)}
+                            onTap={() => setSelectedId(shape.id)}
+                            onDragEnd={(e) => handleDragEnd(index, e)}
+                            onTransformEnd={(e) => handleTransformEnd(index, e)}
                           />
                           )}
                           {shape.type === 'diamond' && (
                           <RegularPolygon
-                            {...shape.attrs}
-                            sides={4}
+                            {...shape}
                             draggable
-                            onDblClick={() => handleTextDblClick(index)}
-                            className={isSelected ? 'selected' : ''}
+                            onClick={() => setSelectedId(shape.id)}
+                            onTap={() => setSelectedId(shape.id)}
+                            onDragEnd={(e) => handleDragEnd(index, e)}
+                            onTransformEnd={(e) => handleTransformEnd(index, e)}
                           />
                           )}
                           {shape.type === 'text' && (
                           <Text
-                            key={index}
-                            {...shape.attrs}
+                            // key={index}
                             onDblClick={() => handleTextDblClick(index)}
-                            className={isSelected ? 'selected' : ''}
-                            width={90} // Set the width to limit text to 30 characters
-                            align="center" // Align text to center
-                            wrap="word"
+                            {...shape}
+                            draggable
+                            onClick={() => setSelectedId(shape.id)}
+                            onTap={() => setSelectedId(shape.id)}
+                            onDragEnd={(e) => handleDragEnd(index, e)}
+                            onTransformEnd={(e) => handleTransformEnd(index, e)}
+                          />
+                          )}
+                          {selectedId === shape.id && (
+                          <Transformer
+                            ref={trRef}
+                            boundBoxFunc={(oldBox, newBox) => {
+                              if (Math.abs(newBox.width) < 5 || Math.abs(newBox.height) < 5) {
+                                return oldBox;
+                              }
+                              return newBox;
+                            }}
                           />
                           )}
                         </React.Fragment>
