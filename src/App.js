@@ -168,7 +168,7 @@ function App() {
       fill: 'transparent', // Inside color
       stroke: circleColor, // Border color
       text: '', // Initialize text property
-      strokeWidth: 3,
+      // strokeWidth: 3,
       fillText: 'white', // Add fillText property
       fontSize: 12, // Add fontSize property
       id: `circle${shapes.length + 1}`,
@@ -189,7 +189,7 @@ function App() {
       height: 100,
       fill: 'transparent', // Inside color
       stroke: rectangleColor, // Border color
-      strokeWidth: 3,
+      // strokeWidth: 3,
       fontSize: 12, // Add fontSize property
       id: `rect${shapes.length + 1}`,
 
@@ -210,7 +210,7 @@ function App() {
       radius: 50 * Math.sqrt(2), // Calculate radius based on side length for a regular polygon
       fill: 'transparent',
       stroke: diamondColor,
-      strokeWidth: 3,
+      // strokeWidth: 3,
       rotation: 45, // Rotate the square to make it look like a diamond
       text: '', // Initialize text property
       fillText: 'white', // Add fillText property
@@ -233,7 +233,6 @@ function App() {
       fill: textColor,
       fontSize: 18,
       draggable: true,
-      // id: `text${shapes.length + 1}`,
     };
     const action = { shape: text, index: shapes.length };
     setUndoStack([...undoStack, action]);
