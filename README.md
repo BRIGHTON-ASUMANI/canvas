@@ -1,6 +1,5 @@
 # React Canvas
-![Screenshot from 2024-04-09 08-16-09](https://github.com/BRIGHTON-ASUMANI/canvas/assets/36225890/1f9c8c03-3655-45e6-89f5-70b8fe113b88)
-![Screenshot from 2024-04-09 08-33-48](https://github.com/BRIGHTON-ASUMANI/canvas/assets/36225890/a1998bcd-5f17-45f5-893b-5a72e6843506)
+![Screenshot from 2024-04-09 09-41-47](https://github.com/BRIGHTON-ASUMANI/canvas/assets/36225890/367c8fb1-972e-48e7-be91-5debcf7ae960)
 
 
 ## Overview
