@@ -12,17 +12,18 @@ import {
 import {
   Stage, Layer, Text, Circle, Rect, RegularPolygon,
   Transformer,
+  Arrow,
 } from 'react-konva';
-import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
-import { faUndo, faRedo, faTrash } from '@fortawesome/free-solid-svg-icons';
 import './App.css';
+import Sidebar from './components/SideBar';
+import CustomNavbar from './components/Navbar';
 
 function App() {
   const stageRef = useRef(null);
   const layerRef = useRef(null);
   const [shapes, setShapes] = useState([]);
   const [selectedShapeIndex, setSelectedShapeIndex] = useState(null);
-  const [brandName, setBrandName] = useState('Name of the project');
+  const [brandName, setBrandName] = useState('Enter Name');
   const [undoStack, setUndoStack] = useState([]);
   const [redoStack, setRedoStack] = useState([]);
   const [circleColor, setCircleColor] = useState('red');
@@ -167,10 +168,10 @@ function App() {
       radius: 50,
       fill: 'transparent', // Inside color
       stroke: circleColor, // Border color
-      text: '', // Initialize text property
+      text: '',
       // strokeWidth: 3,
-      fillText: 'white', // Add fillText property
-      fontSize: 12, // Add fontSize property
+      fillText: 'white',
+      fontSize: 12,
       id: `circle${shapes.length + 1}`,
     };
     const action = { shape: circle, index: shapes.length };
@@ -190,7 +191,7 @@ function App() {
       fill: 'transparent', // Inside color
       stroke: rectangleColor, // Border color
       // strokeWidth: 3,
-      fontSize: 12, // Add fontSize property
+      fontSize: 12,
       id: `rect${shapes.length + 1}`,
 
     };
@@ -206,15 +207,15 @@ function App() {
       type: 'diamond',
       x: window.innerWidth / 2,
       y: window.innerHeight / 2,
-      sides: 4, // A diamond is essentially a square (4 sides)
+      sides: 4,
       radius: 50 * Math.sqrt(2), // Calculate radius based on side length for a regular polygon
       fill: 'transparent',
       stroke: diamondColor,
       // strokeWidth: 3,
-      rotation: 45, // Rotate the square to make it look like a diamond
-      text: '', // Initialize text property
-      fillText: 'white', // Add fillText property
-      fontSize: 12, // Add fontSize property
+      rotation: 45,
+      text: '',
+      fillText: 'white',
+      fontSize: 12,
       id: `diamond${shapes.length + 1}`,
     };
     const action = { shape: diamond, index: shapes.length };
@@ -224,12 +225,31 @@ function App() {
     setRedoStack([]);
   };
 
+  const addArrow = () => {
+    const arrow = {
+      type: 'arrow',
+      points: [100, 100, 200, 200], // Change points as needed
+      pointerLength: 10,
+      pointerWidth: 10,
+      fill: 'black',
+      stroke: 'black',
+      strokeWidth: 2,
+      draggable: true,
+      id: `arrow${shapes.length + 1}`,
+    };
+    const action = { shape: arrow, index: shapes.length };
+    setUndoStack([...undoStack, action]);
+    setShapes([...shapes, arrow]);
+    setSelectedId(arrow.id);
+    setRedoStack([]);
+  };
+
   const addText = () => {
     const text = {
       type: 'text',
       x: window.innerWidth / 2,
       y: window.innerHeight / 2,
-      text: 'Sample Text', // Default text
+      text: 'Sample Text',
       fill: textColor,
       fontSize: 18,
       draggable: true,
@@ -278,138 +298,31 @@ function App() {
 
   return (
     <div>
-      <Navbar
-        bg="light"
-        variant="
-light">
-        <Navbar.Brand>
-          <Form.Control
-            type="text"
-            placeholder="Enter brand name"
-            value={brandName}
-            onChange={(e) => setBrandName(e.target.value)}
-            style={{ fontWeight: 'bold', fontSize: '16px' }}
-          />
-        </Navbar.Brand>
-        <Nav>
-          <Nav.Link onClick={handleUndo}>
-            <FontAwesomeIcon icon={faUndo} />
-&nbsp;
-            Undo
-          </Nav.Link>
-          <Nav.Link onClick={handleRedo}>
-            <FontAwesomeIcon icon={faRedo} />
-&nbsp;
-            Redo
-          </Nav.Link>
-        </Nav>
-        <Nav className="mr-auto">
-          <Dropdown>
-            <Dropdown.Toggle as={Nav.Link} id="file-dropdown">
-              File
-            </Dropdown.Toggle>
-            <Dropdown.Menu>
-              <Dropdown.Item
-                variant="primary"
-                onClick={handleDownload}
-              >
-                Download Project
-              </Dropdown.Item>
-              <Dropdown.Item>test</Dropdown.Item>
-              <Dropdown.Item>test</Dropdown.Item>
-              <Dropdown.Item>test</Dropdown.Item>
-              <Dropdown.Item>test</Dropdown.Item>
-            </Dropdown.Menu>
-          </Dropdown>
-          <Nav.Link disabled>Edit</Nav.Link>
-          <Nav.Link disabled>Select</Nav.Link>
-          <Nav.Link disabled>View</Nav.Link>
-          <Nav.Link disabled>Insert</Nav.Link>
-        </Nav>
-      </Navbar>
+      <CustomNavbar
+        brandName={brandName}
+        setBrandName={setBrandName}
+        handleUndo={handleUndo}
+        handleRedo={handleRedo}
+        handleDownload={handleDownload}
+      />
       <Container fluid>
         <Row>
           <Col md={2} className="sidebar">
-            <Card className="px-2 pt-2">
-              <div>
-                <h6>Add Colors</h6>
-                <div className="shape-container">
-                  {/* Input for Circle Color */}
-                  <Form.Group controlId="circleColor">
-                    <Form.Label>Circle Color</Form.Label>
-                    <Form.Control
-                      type="color"
-                      value={circleColor}
-                      onChange={(e) => setCircleColor(e.target.value)}
-                    />
-                  </Form.Group>
-
-                  {/* Input for Rectangle Color */}
-                  <Form.Group controlId="rectangleColor">
-                    <Form.Label>Rectangle Color</Form.Label>
-                    <Form.Control
-                      type="color"
-                      value={rectangleColor}
-                      onChange={(e) => setRectangleColor(e.target.value)}
-                    />
-                  </Form.Group>
-
-                  {/* Input for Diamond Color */}
-                  <Form.Group controlId="diamondColor">
-                    <Form.Label>Diamond Color</Form.Label>
-                    <Form.Control
-                      type="color"
-                      value={diamondColor}
-                      onChange={(e) => setDiamondColor(e.target.value)}
-                    />
-                  </Form.Group>
-
-                  {/* Input for Text Color */}
-                  <Form.Group controlId="textColor">
-                    <Form.Label>Text Color</Form.Label>
-                    <Form.Control
-                      type="color"
-                      value={textColor}
-                      onChange={(e) => setTextColor(e.target.value)}
-                    />
-                  </Form.Group>
-                </div>
-              </div>
-              <hr />
-              {' '}
-              {/* Divider between color and shape sections */}
-              <div>
-                <h6>Add Shapes & Text</h6>
-                <div className="shape-container">
-                  {/* SVG Icons for adding shapes */}
-                  <div className="shape-icons">
-                    <svg width="40" height="40" onClick={addCircle}>
-                      <circle stroke="black" strokeWidth="3" fill="transparent" cx="20" cy="20" r="18" />
-                    </svg>
-                    <svg width="40" height="40" onClick={addRectangle}>
-                      <rect stroke="black" strokeWidth="3" fill="transparent" x="2" y="2" width="46" height="26" />
-                    </svg>
-                    <svg width="40" height="40" onClick={addDiamond}>
-                      <polygon stroke="black" strokeWidth="3" fill="transparent" rotate={90} points="20,2 38,20 20,38 2,20" />
-                    </svg>
-                    <svg width="50" height="50" onClick={addText}>
-                      <text stroke="black" strokeWidth="3" x="10" y="30" fontSize="24" fontWeight="bold">T</text>
-                    </svg>
-                  </div>
-
-                  {/* Delete shape button */}
-                  {/* <div className="delete-shape" onClick={() => handleDelete()}> */}
-                  {/* <span>Delete shape</span> */}
-                  {/* <FontAwesomeIcon
-                      icon={faTrash}
-                      size="5x"
-                      shake={selectedShapeIndex !== null}
-                      onClick={() => handleDelete()}
-                    /> */}
-                  {/* </div> */}
-                </div>
-              </div>
-            </Card>
+            <Sidebar
+              addCircle={addCircle}
+              addRectangle={addRectangle}
+              addDiamond={addDiamond}
+              addText={addText}
+              addArrow={addArrow}
+              circleColor={circleColor}
+              setCircleColor={setCircleColor}
+              rectangleColor={rectangleColor}
+              setRectangleColor={setRectangleColor}
+              diamondColor={diamondColor}
+              setDiamondColor={setDiamondColor}
+              textColor={textColor}
+              setTextColor={setTextColor}
+            />
           </Col>
 
           <Col md={10}>
@@ -463,6 +376,35 @@ light">
                             onTap={() => setSelectedId(shape.id)}
                             onDragEnd={(e) => handleDragEnd(index, e)}
                             onTransformEnd={(e) => handleTransformEnd(index, e)}
+                          />
+                          )}
+                          {shape.type === 'arrow' && (
+                          <Arrow
+                            key={shape.id}
+                            {...shape}
+                            onClick={() => setSelectedId(shape.id)}
+                            onTap={() => setSelectedId(shape.id)}
+                            onDragStart={() => {
+                              // Add logic to update the selected shape index
+                              const selectedIndex = shapes.findIndex(
+                                (item) => item.id === shape.id,
+                              );
+                              setSelectedShapeIndex(selectedIndex);
+                            }}
+                            onDragEnd={(e) => {
+                              // Update the position of the arrow shape when drag ends
+                              const selectedIndex = shapes.findIndex(
+                                (item) => item.id === shape.id,
+                              );
+                              const newShapes = [...shapes];
+                              newShapes[selectedIndex] = {
+                                ...newShapes[selectedIndex],
+                                x: e.target.x(),
+                                y: e.target.y(),
+                              };
+                              setShapes(newShapes);
+                            }}
+                            draggable
                           />
                           )}
                           {selectedId === shape.id && (
